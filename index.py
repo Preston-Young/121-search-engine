@@ -1,10 +1,8 @@
 # {
 #   "token": {
-#       "token_frequency": frequency (int)
-#       "tf_idf_score": score (int)
-#       "doc_ids": {            # can implicitly derive from len(doc_ids)
-#           "id1": weight (int) 
-#       }
+#       "token_frequency": frequency (int),
+#       "document_frequency": frequency (int),
+#       "tf_idf_score": score (int),
 #       "doc_ids": [
 #           {
 #               "id": page id (string?),
@@ -29,7 +27,7 @@ doc_id =
 
 def parse_json():
 
-    for file in os.listdir(os.path.dirname(...))    # root here?
+    for su    # root here?
 
 
 
