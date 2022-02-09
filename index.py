@@ -23,6 +23,7 @@ from time import time
 import libpy_simdjson as simdjson # https://github.com/gerrymanoim/libpy_simdjson
 from bs4 import BeautifulSoup
 from collections import defaultdict
+from nltk.stem import PorterStemmer
 
 from stopwords import STOPWORDS_SET 
 
@@ -36,6 +37,7 @@ doc_count = 0
 cur_doc_id = 0
 unique_tokens = defaultdict(int)
 url_id_map = {}
+stemmer = PorterStemmer()
 
 '''
 Tokenize given html page
@@ -45,7 +47,8 @@ def tokenize(soup):
 
     # get tokens
     for token in re.split("[^a-zA-Z']+", soup.get_text().lower()):
-        token = token.strip()
+        token = token.strip(" '")
+        token = stemmer.stem(token)
         # check for empty token, ascii, and stopwords
         if token != '' and len(token) == len(token.encode()) and token not in STOPWORDS_SET and len(token) > 2:
             if token not in index:
@@ -93,6 +96,9 @@ def parse_json(root_dir):
 
                 cur_doc_id += 1
                 doc_count += 1
+
+                # if doc_count == 100:
+                #     return
 
 def create_report():
     with open("report.txt", "w") as output:

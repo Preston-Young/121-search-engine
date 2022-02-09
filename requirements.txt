@@ -1,6 +1,11 @@
 beautifulsoup4==4.10.0
+click==8.0.3
+joblib==1.1.0
 libpy==0.2.5
 libpy-simdjson==0.4.0
 lxml==4.7.1
+nltk==3.7
 numpy==1.22.2
+regex==2022.1.18
 soupsieve==2.3.1
+tqdm==4.62.3
