@@ -2,17 +2,18 @@
 #   "token": {
 #       "token_frequency": frequency (int),
 #       "document_frequency": frequency (int),
-#       "tf_idf_score": score (int),
 #       "doc_ids": {
 #           "page_id1": {
 #               "id": page id (string?),
 #               "token_frequency": frequency (int),
-#               "weight": weight (int)
+#               "weight": weight (int),
+#               "tf_idf_score": score (int),
 #           },
 #           "page_id2": {
 #               "id": page id (string?),
 #               "token_frequency": frequency (int),
-#               "weight": weight (int)
+#               "weight": weight (int),
+#               "tf_idf_score": score (int),
 #           }
 #       }
 #   }
@@ -23,12 +24,14 @@ from time import time
 import libpy_simdjson as simdjson # https://github.com/gerrymanoim/libpy_simdjson
 from bs4 import BeautifulSoup
 from collections import defaultdict
+from math import log 
 from nltk.stem import PorterStemmer
 
 from stopwords import STOPWORDS_SET 
 
 DATA_FOLDER = 'DEV'
 INDEX_DUMP_PATH = 'dump.json'
+DOCUMENT_COUNT = 55393
 
 def tree(): return defaultdict(tree)
 index = tree()
@@ -38,6 +41,73 @@ cur_doc_id = 0
 unique_tokens = defaultdict(int)
 url_id_map = {}
 stemmer = PorterStemmer()
+
+MAX_INDEX_SIZE = 5000000 #5mb
+partial_count = 1
+
+HTML_WEIGHTS = {
+    'title': 30,
+    'h1': 10,
+    'h2': 9,
+    'h3': 8,
+    'h4': 7,
+    'b': 3,
+    'strong': 3,
+    'i': 2,
+    'em': 2,
+    'h5': 2,
+    'h6': 2
+}
+
+'''
+Parse given json data
+'''
+def parse_json(root_dir):
+    global cur_doc_id
+    global doc_count
+
+    for subdir, _, files in os.walk(root_dir): 
+        for file in files:
+            if file.lower().endswith(('.json')):
+                data = simdjson.load(os.path.join(subdir, file))
+                data_url = data.at_pointer(b'/url').decode()
+                data_content = data.at_pointer(b'/content').decode()
+                
+                url_id_map[cur_doc_id] = data_url
+                
+                print(f'{os.path.join(subdir, file)} - {data_url}')
+
+                soup = BeautifulSoup(data_content, 'lxml')
+
+                cur_doc_tokens = tokenize(soup)
+                update_tf_idf(cur_doc_id, cur_doc_tokens)
+
+                # Calculate weights here
+                assign_importance(soup, cur_doc_id)
+
+                #check if index needs to be cleared and stored in disk    
+                if(sys.getsizeof(index) > MAX_INDEX_SIZE):
+                    write_partial_index()
+
+                cur_doc_id += 1
+                doc_count += 1
+
+            if doc_count == 25:
+                break
+
+        if doc_count == 25:
+            break
+
+    # Calculate tf idf for every document tied to each token 
+    for token in index:
+        for doc_id in index[token]["doc_ids"]:
+            # Set score
+            idf = log( DOCUMENT_COUNT / (1 + index[token]["document_frequency"]), 10)
+            tf = index[token]["doc_ids"][doc_id]["token_frequency"]
+            index[token]["doc_ids"][doc_id]["tf_idf_score"] = tf * idf
+
+    #write remaining index to disk
+    write_partial_index()
 
 '''
 Tokenize given html page
@@ -72,34 +142,54 @@ def update_tf_idf(doc_id, cur_doc_tokens):
         # }
         index[token]["document_frequency"] += 1
         index[token]["token_frequency"] += freq
-        index[token]["doc_ids"][doc_id] = {"id": doc_id, "token_frequency": freq, "weight": 0} 
-        # TODO: calculate weight later
+        index[token]["doc_ids"][doc_id] = {"id": doc_id, "token_frequency": freq, "weight": 0, "tf_idf_score": 0}
+        # TODO: normalize token_frequency
 
-def parse_json(root_dir):
-    global cur_doc_id
-    global doc_count
+        # idf of a given term, is constant for a given term
 
-    for subdir, _, files in os.walk(root_dir): 
-        for file in files:
-            if file.lower().endswith(('.json')):
-                data = simdjson.load(os.path.join(subdir, file))
-                data_url = data.at_pointer(b'/url').decode()
-                data_content = data.at_pointer(b'/content').decode()
-                
-                url_id_map[cur_doc_id] = data_url
-                
-                print(f'{os.path.join(subdir, file)} - {data_url}')
+        # idf = log( DOCUMENT_COUNT / (1 + index[token]["document_frequency"]), 10)
+        # tf = index[token]["doc_ids"][doc_id]["token_frequency"]
+        # index[token]["doc_ids"][doc_id]["tf_idf_score"] = tf * idf
+        # tf-idf = tf * idf
+        
 
-                soup = BeautifulSoup(data_content, 'lxml')
-                cur_doc_tokens = tokenize(soup)
-                update_tf_idf(cur_doc_id, cur_doc_tokens)
+'''
+Determine the importance of a given input list
+'''
+def assign_importance(soup, doc_id):
+     stemmer = PorterStemmer()
+     
+     # TODO: check if find_all without parameters gives all tags
+     for tag in soup.find_all():
+        tag_text = tag.get_text().split()
 
-                cur_doc_id += 1
-                doc_count += 1
+        for word in tag_text:
+            word = stemmer.stem(word)
+            if word in index:
+                if doc_id in index[word]["doc_ids"]:
+                    index[word]["doc_ids"][doc_id]["weight"] += HTML_WEIGHTS.get(tag.name, 1)
 
-                # if doc_count == 100:
-                #     return
+'''
+writes current index to file and clears it if size exceeds 5mb
+'''
+def write_partial_index():
+    global index
+    global partial_count
 
+    file_name = "index_storage/partial" + str(partial_count) + ".json"
+
+    with open(file_name, "w") as output_file:
+        #sort index
+        sorted_index = {token: token_info for token, token_info in sorted(index.items(), key = lambda item: item[0])}
+        json.dump(sorted_index, output_file, indent = 3)
+
+    # TODO: clear
+    # index.clear()
+    partial_count += 1
+
+'''
+create report from data
+'''
 def create_report():
     with open("report.txt", "w") as output:
         output.write(f"Number of documents: {doc_count}\n")
@@ -109,9 +199,12 @@ def create_report():
         size_in_kb = sys.getsizeof(index) / 1000
         output.write(f"Size of index on disk: {size_in_kb}KB\n")
 
-if __name__ == '__main__':
+'''
+main function
+'''
+def main():
     start = time()  # start timer
-    
+
     parse_json(DATA_FOLDER)
 
     end = time()    # end timer
@@ -121,4 +214,6 @@ if __name__ == '__main__':
     create_report()
     with open(INDEX_DUMP_PATH, 'w') as f:
         f.write(json.dumps(index, indent=4, sort_keys=True))
-    
+
+if __name__ == '__main__':
+    main()
