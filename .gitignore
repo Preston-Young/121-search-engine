@@ -3,3 +3,4 @@ venv
 .DS_STORE
 dump.json
 __pycache__/
+report.txt
