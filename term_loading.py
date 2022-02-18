@@ -39,7 +39,7 @@ def get_term_dict(key):
     # Convert string to binary string
     json_term = f'/{key}'.encode()
 
-    print(f'json_term: {json_term}')
+    # print(f'json_term: {json_term}')
 
     binary_dict = loaded_index.at_pointer(json_term)
 
@@ -54,12 +54,19 @@ def get_url_mapping(key):
     # Convert string to binary string
     json_term = f'/{key}'.encode()
 
-    binary_dict = url_id_map.at_pointer(json_term).as_dict()
+    # Decode binary URL into string
+    url_string = url_id_map.at_pointer(json_term).decode()
 
-    return binary_dict
+    return url_string
 
 if __name__ == '__main__':
-    stemmer = PorterStemmer()
-    load_index()    # no params for right now, fp is global
-    d = get_term_dict((stemmer.stem('machine')))
-    print(str(d[b'doc_ids']))
+    # Test get_term_dict
+    # stemmer = PorterStemmer()
+    # load_index()    # no params for right now, fp is global
+    # d = get_term_dict((stemmer.stem('machine')))
+    # print(str(d[b'doc_ids']))
+
+    # Test get_url_mapping
+    load_url_map()
+    d = get_url_mapping(b'45903')
+    print(d)

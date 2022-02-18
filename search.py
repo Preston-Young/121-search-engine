@@ -46,7 +46,7 @@ def handle_query(query: str) -> None:
     # print(f'split query: {query_terms}')
     # print(f'after stemming: {term1}')
     # print(f'term info: {dict(index[term1])}')
-    print(f"Common doc ids: {common_doc_ids}")
+    # print(f"Common doc ids: {common_doc_ids}")
     
     # Loop starts here for intersection
     for term2 in query_terms[1:]:
@@ -87,9 +87,8 @@ def handle_query(query: str) -> None:
         for doc_id in common_doc_ids:
             # calculate score
             #score = index[term]["doc_ids"][doc_id].get("tf_idf_score", 0) * index[term]["doc_ids"][doc_id].get("weight", 0)
-            print(term_dict[b"doc_ids"][doc_id])
-            doc_id = f'{doc_id}'.encode()
-            
+
+            # print(term_dict[b"doc_ids"][doc_id])
             doc_id_dict = term_dict[b"doc_ids"][doc_id]
             if b'weight' in doc_id_dict.keys() and b'tf_idf_score' in doc_id_dict.keys():
                 score = term_dict[b"doc_ids"][doc_id][b"tf_idf_score"] * term_dict[b"doc_ids"][doc_id][b"weight"]
@@ -109,7 +108,7 @@ def get_top_results(scores, N):
 
     counter = 1
     for doc_id in sorted(scores.keys(), key = lambda k: scores[k], reverse = True):
-        url = get_url_mapping(doc_id)
+        url = get_url_mapping(doc_id.decode())
         urls.append(url)
         # urls.append(url_id_map[doc_id])
 
