@@ -1,14 +1,28 @@
 import re
 #import mmap
-from index import main, index, url_id_map
+from index import main, index, url_id_map, valid_token
+from time import time
 #import stopwards.py
 from collections import defaultdict
 from nltk.stem import PorterStemmer
 
+from stopwords import STOPWORDS_SET 
+
+TOP_RESULT_COUNT = 5
+EXIT_COMMAND = '/end'
 
 def handle_query(query: str) -> None:
-    query_terms = re.sub("[^0-9a-zA-Z']+", "", query)
+    query_terms = re.sub("[^\s0-9a-zA-Z']+", "", query)
     query_terms = query_terms.split()
+
+    # Filter out invalid tokens
+    query_terms = list(filter(valid_token, query_terms))
+
+    if len(query_terms) == 0:
+        return []
+
+
+    # print(f"Query Terms: {query_terms}")
     
     # Assuming that stopwards are not yet filtered:
     # with open('stopwards.py') as file:
@@ -19,29 +33,31 @@ def handle_query(query: str) -> None:
 
     # TODO: Change this intersection logic to work for 1 and >2
 
-    print(f'split query: {query_terms}')
-
     stemmer = PorterStemmer()
 
     term1 = query_terms[0]
     term1 = stemmer.stem(term1)
-    
-    print(f'after stemming: {term1}')
-    print(f'term info: {dict(index[term1])}')
 
-    common_doc_ids = list(index[term1]["doc_ids"].keys())
+    common_doc_ids = list(sorted(index[term1]["doc_ids"].keys()))
+
+    # print(f'split query: {query_terms}')
+
+    # print(f'after stemming: {term1}')
+    # print(f'term info: {dict(index[term1])}')
     
-    print(f'common doc ids: {common_doc_ids}')
+    # print(f"Common doc ids: {common_doc_ids}")
     
     # Loop starts here for intersection
     for term2 in query_terms[1:]:
         term2 = stemmer.stem(term2)
-        term2_doc_ids = list(index[term2]["doc_ids"].keys())
+        term2_doc_ids = list(sorted(index[term2]["doc_ids"].keys()))
         
         ptr1 = ptr2 = 0
 
+        # print(f"Common doc ids: {common_doc_ids}")
         common_doc_ids_copy = common_doc_ids[:]
         common_doc_ids = []
+        
         while ptr1 < len(common_doc_ids_copy) and ptr2 < len(term2_doc_ids):
             term1_doc_id = common_doc_ids_copy[ptr1]
             term2_doc_id = term2_doc_ids[ptr2]
@@ -63,11 +79,11 @@ def handle_query(query: str) -> None:
     scores = defaultdict(int)
     for term in query_terms:
         for doc_id in common_doc_ids:
-            # TODO: Change method for calculating score
-            score = index[term]["doc_ids"][doc_id]["tf_idf_score"] * index[term]["doc_ids"][doc_id]["weight"]
+            # TODO (done): Change method for calculating score
+            score = index[term]["doc_ids"][doc_id].get("tf_idf_score", 0) * index[term]["doc_ids"][doc_id].get("weight", 0)
             scores[doc_id] += score
 
-    get_top_results(scores, 5)
+    return get_top_results(scores, TOP_RESULT_COUNT)
 
 '''
 Search through common doc_ids, sort by tf-idf and weight, and return top N results
@@ -84,10 +100,32 @@ def get_top_results(scores, N):
 
         counter += 1
 
-    print(urls)
     return urls
 
 if __name__ == "__main__":
     main()
-    query = input("What would you like to search for?\n")
-    handle_query(query)
+
+    # Get multiple queries in a loop
+    while True:
+        query = input("\nWhat would you like to search for: ")
+
+        if query == EXIT_COMMAND:
+            break
+
+        start = time()  # start timer
+
+        top_urls = handle_query(query)
+
+        end = time()    # end timer
+        search_time = round((end - start) * 1000, 2)
+        print(f'\nSearch time: {search_time}ms')
+
+        if top_urls:
+            #print urls
+            print("Top 5 URLs:")
+            for i, url in enumerate(top_urls, 1):
+                print(f"{i}. {url}")
+            
+            print()
+        else:
+            print("No results found.")

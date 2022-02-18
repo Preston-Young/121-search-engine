@@ -1,0 +1,12 @@
+Milestone 3:
+
+1. Store doc_id map in file(s)
+2. Optimize query
+    2a. Lec 17 Slide 29 being more efficient with AND query
+    2b. Phrase queries?
+    2c. Bigrams?
+    2d. Rank importance by proximity for phrase queries
+3. Get partial and merge index working
+4. Positional indexes?
+5. Index the index (seek): Lecture 8 Slide 15
+6. Save partial index

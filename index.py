@@ -86,17 +86,17 @@ def parse_json(root_dir):
                 assign_importance(soup, cur_doc_id)
 
                 #check if index needs to be cleared and stored in disk    
-                if(sys.getsizeof(index) > MAX_INDEX_SIZE):
-                    write_partial_index()
+                # if(sys.getsizeof(index) > MAX_INDEX_SIZE):
+                #     write_partial_index()
 
                 cur_doc_id += 1
                 doc_count += 1
 
-            if doc_count == 25:
-                break
+        #     if doc_count == 50:
+        #         break
 
-        if doc_count == 25:
-            break
+        # if doc_count == 50:
+        #     break
 
     # Calculate tf idf for every document tied to each token 
     for token in index:
@@ -120,7 +120,7 @@ def tokenize(soup):
         token = token.strip(" '")
         token = stemmer.stem(token)
         # check for empty token, ascii, and stopwords
-        if token != '' and len(token) == len(token.encode()) and token not in STOPWORDS_SET and len(token) > 2:
+        if valid_token(token):
             if token not in index:
                 index[token] = {"token_frequency": 0, "document_frequency": 0, "doc_ids": {}}
 
@@ -142,8 +142,8 @@ def update_tf_idf(doc_id, cur_doc_tokens):
         # }
         index[token]["document_frequency"] += 1
         index[token]["token_frequency"] += freq
-        index[token]["doc_ids"][doc_id] = {"id": doc_id, "token_frequency": freq, "weight": 0, "tf_idf_score": 0}
-        # TODO: normalize token_frequency
+        index[token]["doc_ids"][doc_id] = {"id": doc_id, "token_frequency": freq/sum(cur_doc_tokens.values()), "weight": 0, "tf_idf_score": 0}
+        # TODO (done): normalize token_frequency
 
         # idf of a given term, is constant for a given term
 
@@ -161,11 +161,13 @@ def assign_importance(soup, doc_id):
      
      # TODO: check if find_all without parameters gives all tags
      for tag in soup.find_all():
-        tag_text = tag.get_text().split()
+        tag_text = re.split("[^a-zA-Z']+", tag.get_text().lower())
 
+        # TODO: Tokenize this?
         for word in tag_text:
-            word = stemmer.stem(word)
+            word = stemmer.stem(word.strip(" '"))
             if word in index:
+                
                 if doc_id in index[word]["doc_ids"]:
                     index[word]["doc_ids"][doc_id]["weight"] += HTML_WEIGHTS.get(tag.name, 1)
 
@@ -181,11 +183,17 @@ def write_partial_index():
     with open(file_name, "w") as output_file:
         #sort index
         sorted_index = {token: token_info for token, token_info in sorted(index.items(), key = lambda item: item[0])}
-        json.dump(sorted_index, output_file, indent = 3)
+        json.dump(sorted_index, output_file, indent = 2)
 
     # TODO: clear
     # index.clear()
     partial_count += 1
+
+'''
+Determine if a token is valid
+'''
+def valid_token(token):
+    return token != '' and len(token) == len(token.encode()) and token not in STOPWORDS_SET and len(token) > 2
 
 '''
 create report from data
@@ -208,8 +216,8 @@ def main():
     parse_json(DATA_FOLDER)
 
     end = time()    # end timer
-
-    print(f'Indexing time: {end-start} s')
+    index_time = round(end-start, 2)
+    print(f'Indexing time: {index_time}s')
 
     create_report()
     with open(INDEX_DUMP_PATH, 'w') as f:
