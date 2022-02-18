@@ -10,3 +10,13 @@ Milestone 3:
 4. Positional indexes?
 5. Index the index (seek): Lecture 8 Slide 15
 6. Save partial index
+
+
+Fixing issue with large index:
+1. Store url_to_id map in a JSON file - DONE
+2. Index:
+    a. Load index file as JSON binary at the top of search.py
+    b. Make a new file for helper functions
+        a. Check if key exists in JSON binary
+        b. Fetch key and return decoded python dict
+    c. Edit search.py to work with new index helper

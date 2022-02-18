@@ -60,6 +60,30 @@ HTML_WEIGHTS = {
 }
 
 '''
+Load URL ID Map
+'''
+def load_url_id_map():
+    global cur_doc_id
+    global doc_count
+
+    for subdir, _, files in os.walk(DATA_FOLDER): 
+        for file in files:
+            if file.lower().endswith(('.json')):
+                data = simdjson.load(os.path.join(subdir, file))
+                data_url = data.at_pointer(b'/url').decode()
+                data_content = data.at_pointer(b'/content').decode()
+                
+                url_id_map[cur_doc_id] = data_url
+
+                print(f'{os.path.join(subdir, file)} - {data_url}')
+
+                cur_doc_id += 1
+                doc_count += 1
+
+    with open("index_storage/url_id_map.json", "w") as output_file:
+        json.dump(url_id_map, output_file, indent = 2)
+
+'''
 Parse given json data
 '''
 def parse_json(root_dir):
@@ -107,7 +131,11 @@ def parse_json(root_dir):
             index[token]["doc_ids"][doc_id]["tf_idf_score"] = tf * idf
 
     #write remaining index to disk
-    write_partial_index()
+    #write_partial_index()
+
+    #write url_id_map to json file
+    with open("index_storage/url_id_map.json", "w") as output_file:
+        json.dump(url_id_map, output_file, indent = 2)
 
 '''
 Tokenize given html page
