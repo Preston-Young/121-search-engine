@@ -12,3 +12,4 @@ __pycache__/
 
 report.txt
 index_storage
+common.py
