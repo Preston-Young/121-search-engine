@@ -43,6 +43,7 @@ def handle_query(query: str) -> None:
     # return dict for term1 
     #common_doc_ids = list(sorted(index[term1]["doc_ids"].keys()))
     term1_dict = get_term_dict(term1)
+    if not term1_dict: return []
     common_doc_ids = list(sorted(term1_dict[b'doc_ids'].keys()))
 
     # print(f'split query: {query_terms}')
@@ -56,6 +57,7 @@ def handle_query(query: str) -> None:
     for term2 in query_terms[1:]:
         #term2_doc_ids = list(sorted(index[term2]["doc_ids"].keys()))
         term2_dict = get_term_dict(term2)
+        if not term2_dict: return []
         term2_doc_ids = list(sorted(term2_dict[b'doc_ids'].keys()))
         
         ptr1 = ptr2 = 0

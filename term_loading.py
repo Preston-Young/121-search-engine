@@ -49,7 +49,10 @@ def get_term_dict(key):
 
     # print(f'json_term: {json_term}')
 
-    binary_dict = loaded_index.at_pointer(json_term)
+    try:
+        binary_dict = loaded_index.at_pointer(json_term)
+    except:
+        binary_dict = None
 
     return binary_dict
 

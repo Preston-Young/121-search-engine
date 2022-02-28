@@ -3,13 +3,16 @@
 import cython
 import array
 from collections import defaultdict
+import heapq
 
 from term_loading import get_term_dict
 
 def score_results(dict scores, int N):
-    cdef int k
-    sort = sorted(scores.keys(), key = lambda k: scores[k], reverse = True)
-    top = sort[0:N]
+    # cdef int k
+    # sort = sorted(scores.items(), key=lambda x:x[1], reverse = True)
+    # top = sort[0:N]
+    
+    top = heapq.nlargest(N, scores, key=scores.get)
 
     return top
 
