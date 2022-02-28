@@ -95,7 +95,7 @@ def handle_query(query: str) -> None:
 
     end = time()    # end timer
     scoring_time = round((end - start) * 1000, 2)
-    print(f'Scoring runtime: {scoring_time}ms')
+    print(f'Calculate and return top urls runtime: {scoring_time}ms')
 
     return top_urls
 
