@@ -34,9 +34,9 @@ def handle_query(query: str) -> None:
     # TODO: Change this intersection logic to work for 1 and >2
 
     stemmer = PorterStemmer()
+    query_terms = list(map(lambda term: stemmer.stem(term), query_terms))
 
     term1 = query_terms[0]
-    term1 = stemmer.stem(term1)
 
     # return dict for term1 
     #common_doc_ids = list(sorted(index[term1]["doc_ids"].keys()))
@@ -49,9 +49,9 @@ def handle_query(query: str) -> None:
     # print(f"Common doc ids: {common_doc_ids}")
     
     # Loop starts here for intersection
+    start = time()
+    
     for term2 in query_terms[1:]:
-        term2 = stemmer.stem(term2)
-
         #term2_doc_ids = list(sorted(index[term2]["doc_ids"].keys()))
         term2_dict = get_term_dict(term2)
         term2_doc_ids = list(sorted(term2_dict[b'doc_ids'].keys()))
@@ -76,26 +76,34 @@ def handle_query(query: str) -> None:
 
             else:
                 ptr2 += 1
+    
+    end = time()    # end timer
+    intersection_time = round((end - start) * 1000, 2)
+    print(f'Common doc id count: {len(common_doc_ids)}')
+    print(f'Common doc id calculation runtime: {intersection_time}ms')
 
     # Build doc_id:score dict
     # {doc_id: score}
     # {1: 10, 4: 50}
+    start = time() 
+    
     scores = defaultdict(int)
     for term in query_terms:
-        term = stemmer.stem(term)
         term_dict = get_term_dict(term)
         for doc_id in common_doc_ids:
             # calculate score
-            #score = index[term]["doc_ids"][doc_id].get("tf_idf_score", 0) * index[term]["doc_ids"][doc_id].get("weight", 0)
+            # score = index[term]["doc_ids"][doc_id].get("tf_idf_score", 0) * index[term]["doc_ids"][doc_id].get("weight", 0)
 
             # print(term_dict[b"doc_ids"][doc_id])
-            doc_id_dict = term_dict[b"doc_ids"][doc_id]
-            if b'weight' in doc_id_dict.keys() and b'tf_idf_score' in doc_id_dict.keys():
-                score = term_dict[b"doc_ids"][doc_id][b"tf_idf_score"] * term_dict[b"doc_ids"][doc_id][b"weight"]
-            else:
-                score = 0
+            # doc_id_dict = term_dict[b"doc_ids"][doc_id]
+            # if b'weight' in doc_id_dict and b'tf_idf_score' in doc_id_dict:
+            score = term_dict[b"doc_ids"][doc_id][b"tf_idf_score"] * term_dict[b"doc_ids"][doc_id][b"weight"]
 
             scores[doc_id] += score
+    
+    end = time()    # end timer
+    scoring_time = round((end - start) * 1000, 2)
+    print(f'Scoring runtime: {scoring_time}ms')
 
     return get_top_results(scores, TOP_RESULT_COUNT)
 
@@ -137,11 +145,11 @@ if __name__ == "__main__":
 
         end = time()    # end timer
         search_time = round((end - start) * 1000, 2)
-        print(f'\nSearch time: {search_time}ms')
+        print(f'Search time: {search_time}ms')
 
         if top_urls:
             #print urls
-            print("Top 5 URLs:")
+            print("\nTop 5 URLs:")
             for i, url in enumerate(top_urls, 1):
                 print(f"{i}. {url}")
             
