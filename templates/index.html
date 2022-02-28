@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CS121 Search Engine</title>
+</head>
+<body>
+   <h1>CS121 Search Engine</h1>
+
+   <form method = "POST"> 
+    <p>What would you like to search for? <input type = "text" name = "search" /></p>
+    <input type = "submit" value = "Search" />
+   </form>
+   {%- if result -%}
+   <ol>
+        {% for url in result %}
+
+        <li><a target="_blank" rel="noopener noreferrer" href="{{ url }}"> {{ url }} </a></li>
+
+        {% endfor %}
+   </ol>
+    {% endif %}
+</body>
+</html>

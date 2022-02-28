@@ -9,7 +9,7 @@ from nltk.stem import PorterStemmer
 from stopwords import STOPWORDS_SET 
 from term_loading import load_index, load_url_map, get_term_dict, get_url_mapping
 
-from top_results_helper import get_top_results as c_top_results
+from cython_helpers import get_top_results as c_top_results
 
 TOP_RESULT_COUNT = 5
 EXIT_COMMAND = '/end'
