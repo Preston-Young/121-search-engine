@@ -4,5 +4,11 @@ venv
 dump.json
 __pycache__/
 
+*.pyc
+*.pyo
+*.so
+*.o
+*.c
+
 report.txt
 index_storage

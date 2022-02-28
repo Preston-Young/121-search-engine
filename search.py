@@ -9,6 +9,8 @@ from nltk.stem import PorterStemmer
 from stopwords import STOPWORDS_SET 
 from term_loading import load_index, load_url_map, get_term_dict, get_url_mapping
 
+from top_results_helper import get_top_results as c_top_results
+
 TOP_RESULT_COUNT = 5
 EXIT_COMMAND = '/end'
 
@@ -85,27 +87,17 @@ def handle_query(query: str) -> None:
     # Build doc_id:score dict
     # {doc_id: score}
     # {1: 10, 4: 50}
-    start = time() 
+    start = time()
     
-    scores = defaultdict(int)
-    for term in query_terms:
-        term_dict = get_term_dict(term)
-        for doc_id in common_doc_ids:
-            # calculate score
-            # score = index[term]["doc_ids"][doc_id].get("tf_idf_score", 0) * index[term]["doc_ids"][doc_id].get("weight", 0)
+    top_urls = c_top_results(query_terms, common_doc_ids, 5)
 
-            # print(term_dict[b"doc_ids"][doc_id])
-            # doc_id_dict = term_dict[b"doc_ids"][doc_id]
-            # if b'weight' in doc_id_dict and b'tf_idf_score' in doc_id_dict:
-            score = term_dict[b"doc_ids"][doc_id][b"tf_idf_score"] * term_dict[b"doc_ids"][doc_id][b"weight"]
+    top_urls = list(map(lambda url: get_url_mapping(url.decode()), top_urls))
 
-            scores[doc_id] += score
-    
     end = time()    # end timer
     scoring_time = round((end - start) * 1000, 2)
     print(f'Scoring runtime: {scoring_time}ms')
 
-    return get_top_results(scores, TOP_RESULT_COUNT)
+    return top_urls
 
 
 '''
