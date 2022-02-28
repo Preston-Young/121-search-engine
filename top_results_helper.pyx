@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 import cython
 import array
 from collections import defaultdict
@@ -11,9 +13,13 @@ def score_results(dict scores, int N):
 
     return top
 
-# common_doc_ids must be integer array, not byte string array
+# Disabling checks for performance
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def get_top_results(query_terms, list common_doc_ids, int N):
-    cdef int score
+    cdef int score, i, j
+    cdef int query_term_len = len(query_terms)
+    cdef int doc_id_len = len(common_doc_ids)
     cdef bytes doc_id
     cdef str term
     cdef dict term_dict
@@ -21,9 +27,10 @@ def get_top_results(query_terms, list common_doc_ids, int N):
     cdef dict scores = {}
     # cdef bytes[:] doc_ids = common_doc_ids
 
-    for term in query_terms:
-        term_dict = get_term_dict(term).as_dict()
-        for doc_id in common_doc_ids:
+    for i in range(query_term_len):
+        term_dict = get_term_dict(query_terms[i]).as_dict()
+        for j in range(doc_id_len):
+            doc_id = common_doc_ids[j]
             score = term_dict[b"doc_ids"][doc_id][b"tf_idf_score"] * term_dict[b"doc_ids"][doc_id][b"weight"]
 
             if doc_id in scores:
