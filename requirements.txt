@@ -1,6 +1,5 @@
 beautifulsoup4==4.10.0
 click==8.0.3
-Cython==0.29.28
 joblib==1.1.0
 libpy==0.2.5
 libpy-simdjson==0.4.0
