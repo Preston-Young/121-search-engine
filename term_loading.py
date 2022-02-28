@@ -1,7 +1,5 @@
 import libpy_simdjson as simdjson # https://github.com/gerrymanoim/libpy_simdjson
-import json
 from time import time
-from nltk.stem import PorterStemmer
 
 loaded_index = None
 url_id_map = None
@@ -30,6 +28,16 @@ def load_url_map():
     end = time()    # end timer
     
     print(f'url id map load done - {round((end - start) * 1000, 2)}ms')
+
+def get_from_index(pointer):
+    if not loaded_index:
+        print("Index isn't loaded")
+        return
+
+    json_term = pointer.encode()
+    res = loaded_index.at_pointer(json_term)
+
+    return res
 
 def get_term_dict(key):
     if not loaded_index:
