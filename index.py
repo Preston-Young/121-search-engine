@@ -214,8 +214,51 @@ def write_partial_index():
         json.dump(sorted_index, output_file, indent = 2)
 
     # TODO: clear
-    # index.clear()
+    # once it is dumped, we can clear the index to be reused 
+    index.clear()     # clear if we want to reuse this index
     partial_count += 1
+
+'''
+for partial in index_storage:
+    merge_index(partial)
+'''
+
+def merge_partial_index(partial_idx):
+    # Assume partial_idx is already sorted
+    index = "index/a.json"
+    final_out = open(index, "r+")
+    loaded_json = json.load(final_out)
+
+    for term in partial_idx:
+        bin_file = "index/" + term[0] + ".json"
+
+        # Check if we need a new file for letter of next term
+        if bin_file != index:
+
+            # Close old file
+            json.dump(loaded_json, final_out, indent = 2)
+            final_out.close()
+            
+            # Open new file
+            final_out = open(bin_file, "r+")    #a.txt, b.txt, etc
+            loaded_json = json.load(bin_file)
+        
+        dict_1 = partial_idx[term]["doc_ids"]
+        dict_2 = {} if term not in loaded_json else loaded_json[term]["doc_ids"]
+        loaded_json[term] = dict_2.update(dict_1)
+
+    json.dump(loaded_json, final_out, indent = 2)
+    final_out.close()
+
+# dict_1 = { 3: {...}, 4: {...} }
+# dict_2 = { 1: {...}, 2: {...} }
+# full_index = loaded_json = { "hi": { 1: {...}, 2: {...}, 3: {...}, 4: {...} } }
+
+
+'''
+def merge_index():
+
+'''
 
 '''
 Determine if a token is valid
@@ -241,7 +284,16 @@ main function
 def main():
     start = time()  # start timer
 
+    # Parsing json and writing all partial indexes
     parse_json(DATA_FOLDER)
+
+    # Merge all partial indexes
+    '''
+    for partial in index_storage/:
+        merge_partial_index(partial)
+    '''
+    for partial_idx in os.listdir("/index_storage/"):
+        merge_partial_index(partial_idx)
 
     end = time()    # end timer
     index_time = round(end-start, 2)

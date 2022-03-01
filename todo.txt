@@ -10,6 +10,8 @@ Milestone 3:
 4. Positional indexes?
 5. Index the index (seek): Lecture 8 Slide 15
 6. Save partial index
+7. Read in from partial indicies as opposed to the large file, i.e. ("apple" is from a.txt)
+8. Uncomment the partial index logic to ensure that merging and retrieving works properly
 
 
 Fixing issue with large index:

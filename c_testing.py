@@ -2,13 +2,13 @@ from time import time
 from nltk.stem import PorterStemmer
 
 from term_loading import load_index
-from top_results_helper import get_top_results, score_results
+from cython_helpers import get_top_results, score_results
 
 # Removed from git
 from common import common_doc_ids
 
 def dict_sorting_test():
-    score_size = 1000000
+    score_size = 55000
     score_keys = [str(x).encode() for x in range(score_size)]
     score_vals = [str(x).encode() for x in range(score_size)]
     scores = dict(zip(score_keys, score_vals))

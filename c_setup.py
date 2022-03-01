@@ -6,7 +6,7 @@ import numpy
 
 setup(
     name='Top result helper',
-    ext_modules=cythonize("top_results_helper.pyx", language_level="3"),
+    ext_modules=cythonize("cython_helpers.pyx", language_level="3"),
     zip_safe=False,
     include_dirs=[numpy.get_include()]
 )
