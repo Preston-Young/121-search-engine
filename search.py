@@ -1,4 +1,5 @@
 import re
+from operator import itemgetter
 #import mmap
 #from index import main, index, url_id_map, valid_token
 from index import url_id_map, valid_token
@@ -14,7 +15,14 @@ from cython_helpers import get_top_results as c_top_results
 TOP_RESULT_COUNT = 5
 EXIT_COMMAND = '/end'
 
-def handle_query(query: str) -> None:
+QUERY_ERR = {
+    'urls': None,
+    'search_time': -1
+}
+
+def handle_query(query: str) -> dict:
+    print('top of handle query')
+    start = time()
     query_terms = re.sub("[^\s0-9a-zA-Z']+", "", query)
     query_terms = query_terms.split()
 
@@ -22,16 +30,9 @@ def handle_query(query: str) -> None:
     query_terms = list(filter(valid_token, query_terms))
 
     if len(query_terms) == 0:
-        return []
-
-    # print(f"Query Terms: {query_terms}")
+        return QUERY_ERR
     
-    # Assuming that stopwards are not yet filtered:
-    # with open('stopwards.py') as file:
-    #     search = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
-    #     for word in query_terms:
-    #         if re.search(br'(?i){word}', search):
-    #             query_terms.replace(word, '') 
+    print('valid query terms')
 
     # TODO: Change this intersection logic to work for 1 and >2
 
@@ -43,21 +44,20 @@ def handle_query(query: str) -> None:
     # return dict for term1 
     #common_doc_ids = list(sorted(index[term1]["doc_ids"].keys()))
     term1_dict = get_term_dict(term1)
-    if not term1_dict: return []
+    if not term1_dict: return QUERY_ERR
     common_doc_ids = list(sorted(term1_dict[b'doc_ids'].keys()))
+
+    print('term1 done')
 
     # print(f'split query: {query_terms}')
     # print(f'after stemming: {term1}')
     # print(f'term info: {dict(index[term1])}')
     # print(f"Common doc ids: {common_doc_ids}")
     
-    # Loop starts here for intersection
-    start = time()
-    
     for term2 in query_terms[1:]:
         #term2_doc_ids = list(sorted(index[term2]["doc_ids"].keys()))
         term2_dict = get_term_dict(term2)
-        if not term2_dict: return []
+        if not term2_dict: return QUERY_ERR
         term2_doc_ids = list(sorted(term2_dict[b'doc_ids'].keys()))
         
         ptr1 = ptr2 = 0
@@ -80,27 +80,25 @@ def handle_query(query: str) -> None:
 
             else:
                 ptr2 += 1
-    
-    end = time()    # end timer
-    intersection_time = round((end - start) * 1000, 2)
-    print(f'Common doc id count: {len(common_doc_ids)}')
-    print(f'Common doc id calculation runtime: {intersection_time}ms')
 
     # Build doc_id:score dict
     # {doc_id: score}
     # {1: 10, 4: 50}
-    start = time()
     
-    top_urls = c_top_results(query_terms, common_doc_ids, 5)
+    print('other terms done')
 
+    top_urls = c_top_results(query_terms, common_doc_ids, 5)
     top_urls = list(map(lambda url: get_url_mapping(url.decode()), top_urls))
 
     end = time()    # end timer
-    scoring_time = round((end - start) * 1000, 2)
-    print(f'Calculate and return top urls runtime: {scoring_time}ms')
+    search_time = round((end - start) * 1000, 2)
 
-    return top_urls
+    print('top urls fetched')
 
+    return {
+        'urls': top_urls,
+        'search_time': search_time,
+    }
 
 '''
 Search through common doc_ids, sort by tf-idf and weight, and return top N results
@@ -133,12 +131,9 @@ if __name__ == "__main__":
         if query == EXIT_COMMAND:
             break
 
-        start = time()  # start timer
+        res = handle_query(query)
+        top_urls, search_time = itemgetter('urls', 'search_time')(res)
 
-        top_urls = handle_query(query)
-
-        end = time()    # end timer
-        search_time = round((end - start) * 1000, 2)
         print(f'Search time: {search_time}ms')
 
         if top_urls:
