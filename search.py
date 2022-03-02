@@ -2,7 +2,7 @@ import re
 from operator import itemgetter
 #import mmap
 #from index import main, index, url_id_map, valid_token
-from index import url_id_map, valid_token
+from index import valid_token
 from time import time
 from collections import defaultdict
 from nltk.stem import PorterStemmer
