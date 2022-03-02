@@ -1,6 +1,7 @@
 DEV
 venv
 .DS_STORE
+.DS_Store
 dump.json
 __pycache__/
 
