@@ -5,7 +5,7 @@ from term_loading import load_index
 from cython_helpers import get_top_results, score_results
 
 # Removed from git
-from common import common_doc_ids
+# from common import common_doc_ids
 
 def dict_sorting_test():
     score_size = 55000

@@ -1,4 +1,5 @@
 import re
+#import numpy as np
 from operator import itemgetter
 from index import valid_token
 from time import time
@@ -42,6 +43,8 @@ def handle_query(query: str) -> dict:
     term1_dict = get_term_dict(term1)
     if not term1_dict: return QUERY_ERR
     common_doc_ids = list(sorted(term1_dict[b'doc_ids'].keys()))
+    #sorted = np.as_array(term1_dict[b'doc_ids'].keys())
+    #common_doc_ids = np.sort(sorted, kind='timsort')
 
     print('term1 done')
 
@@ -54,7 +57,9 @@ def handle_query(query: str) -> dict:
         term2_dict = get_term_dict(term2)
         if not term2_dict: return QUERY_ERR
         term2_doc_ids = list(sorted(term2_dict[b'doc_ids'].keys()))
-        
+        #sorted = np.as_array(term2_dict[b'doc_ids'].keys())
+        #term2_doc_ids = np.sort(sorted, kind='timsort')
+
         ptr1 = ptr2 = 0
 
         common_doc_ids_copy = common_doc_ids[:]
@@ -77,18 +82,22 @@ def handle_query(query: str) -> dict:
     
     print('other terms done')
 
+    print(f'Finish handle query: {round((time() - start) * 1000, 3)} ms')
+
     # ~~~~~~~~~~~~~~~~Build score dictionary for common doc doc_ids~~~~~~~~~~~~~~~~~~
     # Format:
     #   {doc_id: score}
     #   {1: 10, 4: 50}
 
+    print('fetching top urls')
+    start_fetch = time()
+
     top_urls = c_top_results(query_terms, common_doc_ids, 5)
     top_urls = list(map(lambda url: get_url_mapping(url.decode()), top_urls))
 
-    end = time()    # end timer
-    search_time = round((end - start) * 1000, 2)
+    print(f'top urls fetched: {round((time() - start_fetch) * 1000, 3)} ms')
 
-    print('top urls fetched')
+    search_time = round((time() - start) * 1000, 2)
 
     return {
         'urls': top_urls,
@@ -115,7 +124,10 @@ def get_top_results(scores, N):
 
     return urls
 
-if __name__ == "__main__":
+'''
+Main function
+'''
+def main():
     # Load index and url map from file
     # TODO: Figure out if we still need this function since we're no longer preprocessing index
     # load_index()
@@ -142,3 +154,6 @@ if __name__ == "__main__":
             print()
         else:
             print("No results found.")
+
+if __name__ == "__main__":
+    main()

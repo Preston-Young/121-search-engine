@@ -30,24 +30,16 @@ def load_url_map():
     
     print(f'url id map load done - {round((end - start) * 1000, 2)}ms')
 
-# TODO: Remove this function if not needed
-def get_from_index(pointer):
-    # if not loaded_index:
-    #     print("Index isn't loaded")
-    #     return
-
-    json_term = pointer.encode()
-    res = loaded_index.at_pointer(json_term)
-
-    return res
-
 def get_term_dict(key):
     # if not loaded_index:
     #     print("Index isn't loaded")
     #     return
 
+    print('top of get term dict')
+    start = time()
+
     # Load respective letter index json i.e. a.json, b.json, etc.
-    index_file = f"index/{key[0]}.json".encode()
+    index_file = f"index/{key[0]}.json"
     loaded_index = simdjson.load(index_file)
 
     # Convert string to binary string
@@ -58,6 +50,9 @@ def get_term_dict(key):
 
     except:
         binary_dict = None
+
+
+    print(f'Get term dict: {round((time() - start) * 1000, 3)} ms')
 
     return binary_dict
 
