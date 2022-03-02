@@ -6,6 +6,7 @@ url_id_map = None
 INDEX_FILEPATH = b'index_storage/partial1.json'
 URL_MAP_FILEPATH = b'index_storage/url_id_map.json'
 
+# TODO: Remove this function if we don't need it due to the new way we're indexing
 # Stores the JSON Binary index in loaded_index global
 def load_index():
     global loaded_index
@@ -29,10 +30,11 @@ def load_url_map():
     
     print(f'url id map load done - {round((end - start) * 1000, 2)}ms')
 
+# TODO: Remove this function if not needed
 def get_from_index(pointer):
-    if not loaded_index:
-        print("Index isn't loaded")
-        return
+    # if not loaded_index:
+    #     print("Index isn't loaded")
+    #     return
 
     json_term = pointer.encode()
     res = loaded_index.at_pointer(json_term)
@@ -40,17 +42,20 @@ def get_from_index(pointer):
     return res
 
 def get_term_dict(key):
-    if not loaded_index:
-        print("Index isn't loaded")
-        return
+    # if not loaded_index:
+    #     print("Index isn't loaded")
+    #     return
+
+    # Load respective letter index json i.e. a.json, b.json, etc.
+    index_file = f"index/{key[0]}.json".encode()
+    loaded_index = simdjson.load(index_file)
 
     # Convert string to binary string
     json_term = f'/{key}'.encode()
 
-    # print(f'json_term: {json_term}')
-
     try:
         binary_dict = loaded_index.at_pointer(json_term)
+
     except:
         binary_dict = None
 

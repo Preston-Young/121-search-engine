@@ -1,7 +1,5 @@
 import re
 from operator import itemgetter
-#import mmap
-#from index import main, index, url_id_map, valid_token
 from index import valid_token
 from time import time
 from collections import defaultdict
@@ -34,15 +32,13 @@ def handle_query(query: str) -> dict:
     
     print('valid query terms')
 
-    # TODO: Change this intersection logic to work for 1 and >2
+    # TODO (done): Change this intersection logic to work for 1 and >2
 
     stemmer = PorterStemmer()
     query_terms = list(map(lambda term: stemmer.stem(term), query_terms))
 
     term1 = query_terms[0]
 
-    # return dict for term1 
-    #common_doc_ids = list(sorted(index[term1]["doc_ids"].keys()))
     term1_dict = get_term_dict(term1)
     if not term1_dict: return QUERY_ERR
     common_doc_ids = list(sorted(term1_dict[b'doc_ids'].keys()))
@@ -55,14 +51,12 @@ def handle_query(query: str) -> dict:
     # print(f"Common doc ids: {common_doc_ids}")
     
     for term2 in query_terms[1:]:
-        #term2_doc_ids = list(sorted(index[term2]["doc_ids"].keys()))
         term2_dict = get_term_dict(term2)
         if not term2_dict: return QUERY_ERR
         term2_doc_ids = list(sorted(term2_dict[b'doc_ids'].keys()))
         
         ptr1 = ptr2 = 0
 
-        # print(f"Common doc ids: {common_doc_ids}")
         common_doc_ids_copy = common_doc_ids[:]
         common_doc_ids = []
         
@@ -80,12 +74,13 @@ def handle_query(query: str) -> dict:
 
             else:
                 ptr2 += 1
-
-    # Build doc_id:score dict
-    # {doc_id: score}
-    # {1: 10, 4: 50}
     
     print('other terms done')
+
+    # ~~~~~~~~~~~~~~~~Build score dictionary for common doc doc_ids~~~~~~~~~~~~~~~~~~
+    # Format:
+    #   {doc_id: score}
+    #   {1: 10, 4: 50}
 
     top_urls = c_top_results(query_terms, common_doc_ids, 5)
     top_urls = list(map(lambda url: get_url_mapping(url.decode()), top_urls))
@@ -100,6 +95,7 @@ def handle_query(query: str) -> dict:
         'search_time': search_time,
     }
 
+# TODO: Delete this function as we might not need it (converted to cython)
 '''
 Search through common doc_ids, sort by tf-idf and weight, and return top N results
 '''
@@ -121,7 +117,8 @@ def get_top_results(scores, N):
 
 if __name__ == "__main__":
     # Load index and url map from file
-    load_index()
+    # TODO: Figure out if we still need this function since we're no longer preprocessing index
+    # load_index()
     load_url_map()
 
     # Get multiple queries in a loop
@@ -137,7 +134,7 @@ if __name__ == "__main__":
         print(f'Search time: {search_time}ms')
 
         if top_urls:
-            #print urls
+            # print urls
             print("\nTop 5 URLs:")
             for i, url in enumerate(top_urls, 1):
                 print(f"{i}. {url}")

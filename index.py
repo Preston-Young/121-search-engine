@@ -82,7 +82,7 @@ def parse_json(root_dir):
                 soup = BeautifulSoup(data_content, 'lxml')
 
                 cur_doc_tokens = tokenize(soup)
-                update_tf_idf(cur_doc_id, cur_doc_tokens)
+                update_token_frequency(cur_doc_id, cur_doc_tokens)
 
                 # Calculate weights here
                 assign_importance(soup, cur_doc_id)
@@ -100,13 +100,7 @@ def parse_json(root_dir):
         # if doc_count == BREAK_POINT:
         #     break
 
-    # Calculate tf idf for every document tied to each token 
-    for token in index:
-        for doc_id in index[token]["doc_ids"]:
-            # Set score
-            idf = log( DOCUMENT_COUNT / (1 + index[token]["document_frequency"]), 10)
-            tf = index[token]["doc_ids"][doc_id]["token_frequency"]
-            index[token]["doc_ids"][doc_id]["tf_idf_score"] = tf * idf
+    
 
     #write remaining index to disk
     write_partial_index()
@@ -139,7 +133,7 @@ def tokenize(soup):
 '''
 Only calculates tf (for now)
 '''
-def update_tf_idf(doc_id, cur_doc_tokens):
+def update_token_frequency(doc_id, cur_doc_tokens):
     # Update token frequency of overall and of given document
     for token, freq in cur_doc_tokens.items():
         index[token]["document_frequency"] += 1
@@ -147,13 +141,19 @@ def update_tf_idf(doc_id, cur_doc_tokens):
         index[token]["doc_ids"][doc_id] = {"id": doc_id, "token_frequency": freq/sum(cur_doc_tokens.values()), "weight": 0, "tf_idf_score": 0}
         # TODO (done): normalize token_frequency
 
-        # idf of a given term, is constant for a given term
+    
+'''
+Calculates tf-idf for every document tied to each token
+'''
+def calculate_tf_idf(letter_index_file):
+    with open(f"index/{letter_index_file}") as f:
+        loaded_json = json.load(f)
 
-        # idf = log( DOCUMENT_COUNT / (1 + index[token]["document_frequency"]), 10)
-        # tf = index[token]["doc_ids"][doc_id]["token_frequency"]
-        # index[token]["doc_ids"][doc_id]["tf_idf_score"] = tf * idf
-        # tf-idf = tf * idf
-        
+    for token in loaded_json:
+        for doc_id in loaded_json[token]["doc_ids"]:
+            idf = log( DOCUMENT_COUNT / (1 + loaded_json[token]["document_frequency"]), 10)
+            tf = loaded_json[token]["doc_ids"][doc_id]["token_frequency"]
+            loaded_json[token]["doc_ids"][doc_id]["tf_idf_score"] = tf * idf
 
 '''
 Determine the importance of a given input list
@@ -275,13 +275,18 @@ def main():
         if partial_idx != "url_id_map.json":
             merge_partial_index(partial_idx)
 
+    # Calculate tf-idf for all documents for each token
+    for idx in os.listdir("index"):
+        if idx != "url_id_map.json":
+            calculate_tf_idf(idx)
+
     end = time()    # end timer
     index_time = round(end-start, 2)
     print(f'Indexing time: {index_time}s')
 
-    create_report()
-    with open(INDEX_DUMP_PATH, 'w') as f:
-        f.write(json.dumps(index, indent=4, sort_keys=True))
+    # create_report()
+    # with open(INDEX_DUMP_PATH, 'w') as f:
+    #     f.write(json.dumps(index, indent=4, sort_keys=True))
 
 if __name__ == '__main__':
     main()
