@@ -50,7 +50,8 @@ def get_term_dict(term):
         # Load index/filename and move file pointer directly to correct position
         with open(f"seek_reading_testing/index/{filename}") as index_file:
             index_file.seek(index_of_index_dict[term])
-            json_string = f"{{{index_file.readline().strip()}}}" # Wrap in curly braces and strip off newline
+            # Wrap in curly braces and strip off newline, tailing comma
+            json_string = '{' + index_file.readline().strip(',\n') + '}'
             term_dict = json.loads(json_string)
             
     return term_dict
@@ -85,4 +86,4 @@ if __name__ == '__main__':
     }
 
     save_sub_index(test_dict)
-    print(get_term_dict("term2"))
+    print(get_term_dict("term1"))
