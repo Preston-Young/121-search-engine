@@ -85,5 +85,8 @@ if __name__ == '__main__':
         }
     }
 
-    save_sub_index(test_dict)
-    print(get_term_dict("term1"))
+    with open('index/a.json') as f:
+        print(json.load(f))
+
+    # save_sub_index(test_dict)
+    # print(get_term_dict("term1"))

@@ -2,8 +2,7 @@ from flask_server import app
 
 with app.app_context():
     print('LOADING START')
-    from term_loading import load_index, load_url_map
-    load_index()
+    from term_loading import load_url_map
     load_url_map()
     print('LOADING DONE')
 

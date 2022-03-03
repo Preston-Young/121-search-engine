@@ -195,28 +195,26 @@ def merge_partial_index(partial_idx):
     with open(partial_idx_file) as f:
         partial_index_json = json.load(f)
 
-    index_file = "index/a.json"
-    with open(index_file) as f:
+    index_file_name = "a.json"
+    with open(f"index/{index_file_name}") as f:
         loaded_json = json.load(f)
-        # while(index_file)
-            # curr obj = json.loads(f)
-        # once we load each index file, index the index
 
     # Looking at terms in alphabetical order minimizes the amount of times new file needs to be opened
     for term in sorted(partial_index_json.keys()):
-        char_file = f"index/{term[0]}.json"
+        char_file_name = f"{term[0]}.json"
 
         # Check if we need a different file for letter of next term
-        if char_file != index_file:
+        if index_file_name != char_file_name:
 
             # Dump json from memory into old index_file and close it
-            with open(index_file, "w") as f:
-                json.dump(loaded_json, f, indent = 2)
+            # with open(index_file, "w") as f:
+            #     json.dump(loaded_json, f, indent = 2)
+            save_sub_index(loaded_json, index_file_name)
 
-            index_file = char_file
+            index_file_name = char_file_name
             
             # Load file for current term into memory
-            with open(char_file) as f:
+            with open(f"index/{char_file_name}") as f:
                 loaded_json = json.load(f) # a.txt, b.txt, etc
 
         # Grab token dictionary for partial and loaded_json
@@ -231,23 +229,53 @@ def merge_partial_index(partial_idx):
         loaded_json[term]["doc_ids"].update(partial_doc_id_dict)
 
     # Dump the remaining json from memory into index_file and close it
-    with open(index_file, "w") as f:
-        json.dump(loaded_json, f, indent = 2)
-        # json.dumps(loaded_json, f, indent = 2)
+    # with open(index_file, "w") as f:
+    #     json.dump(loaded_json, f, indent = 2)
+    #     # json.dumps(loaded_json, f, indent = 2)
+    save_sub_index(loaded_json, index_file_name)
 
 # dict_1 = { 3: {...}, 4: {...} }
 # dict_2 = { 1: {...}, 2: {...} }
 # full_index = loaded_json = { "hi": { 1: {...}, 2: {...}, 3: {...}, 4: {...} } }
 
 '''
-Index each of the indicies
-
-def index_of_index(index_file):
-    for line in index_file:
-        #line = json.loads(index_file)
-    
-
+Saves dictionary term_dict into filename, with 1 term per line
+Also builds index of index, with mappings for each term to a specific character
+that can be seeked to later
+"index/a.json"
+"index_of_index/a.json"
 '''
+def save_sub_index(term_dict, filename):
+    # Load index_of_index/filename
+    with open(f"index_of_index/{filename}") as index_of_index_file:
+        index_of_index_dict = json.load(index_of_index_file)
+
+    # Writing into index file for terms
+    with open(f'index/{filename}', 'w') as output_file:
+        # Grab keys
+        keys = list(term_dict.keys())
+        
+        # Write opening curly brace for valid JSON
+        output_file.write('{\n')
+
+        # Write each term on its own line as valid JSON
+        # Adds a comma to the end of every term except the last
+        # Store position in index_of_index_dict
+        for i in range(len(keys) - 1):
+            index_of_index_dict[keys[i]] = output_file.tell()
+            output_file.write(f'"{keys[i]}": {json.dumps(term_dict[keys[i]])},\n')
+        
+        # Handle last term in dict
+        index_of_index_dict[keys[-1]] = output_file.tell()
+        output_file.write(f'"{keys[-1]}": {json.dumps(term_dict[keys[-1]])}\n')
+        
+        # Write closing curly brace
+        output_file.write('}')
+
+    # Dumping index_of_index_dict into file
+    with open(f"index_of_index/{filename}", "w") as index_of_index_file:
+        json.dump(index_of_index_dict, index_of_index_file)
+
 '''
 Determine if a token is valid
 '''
@@ -272,22 +300,28 @@ Main function
 def main():
     start = time()  # start timer
 
-    # Initialize index character json files to empty
-    for ascii in range(97, 123):
-        with open(f"index/{chr(ascii)}.json", "w+") as output:
-            json.dump(dict(), output)
+    # Initialize index and index of index character json files to empty
+    # for ascii in range(97, 123):
+    #     with open(f"index/{chr(ascii)}.json", "w+") as output:
+    #         json.dump(dict(), output)
+    #     with open(f"index_of_index/{chr(ascii)}.json", "w+") as output:
+    #         json.dump(dict(), output)
 
+    # ONLY UNCOMMENT IF YOU WANT TO REBUILD PARTIAL INDEXES FROM SCRATCH
     # Parsing json and writing all partial indexes
     # parse_json(DATA_FOLDER)
 
-    # Merge all partial indexes
-    for partial_idx in os.listdir("index_storage"):
-        if partial_idx != "url_id_map.json":
-            merge_partial_index(partial_idx)
+    # Merge all partial indexes and build index of indexes
+    # print("Starting merge....")
+    # for partial_idx in os.listdir("index_storage"):
+    #     if partial_idx != "url_id_map.json":
+    #         merge_partial_index(partial_idx)
+    # print("Merging finished!")
 
     # Calculate tf-idf for all documents for each token
     for idx in os.listdir("index"):
-        calculate_tf_idf(idx)
+        if idx.endswith('.json'):
+            calculate_tf_idf(idx)
 
     end = time()    # end timer
     index_time = round(end-start, 2)

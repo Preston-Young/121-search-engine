@@ -18,7 +18,7 @@ def get_top_results(list query_terms, list common_doc_ids, int N):
     cdef int score, i, j
     cdef int query_term_len = len(query_terms)
     cdef int doc_id_len = len(common_doc_ids)
-    cdef bytes doc_id
+    cdef str doc_id
     cdef str term
     cdef dict term_dict
     
@@ -26,10 +26,10 @@ def get_top_results(list query_terms, list common_doc_ids, int N):
     # cdef bytes[:] doc_ids = common_doc_ids
 
     for i in range(query_term_len):
-        term_dict = get_term_dict(query_terms[i]).as_dict()
+        term_dict = get_term_dict(query_terms[i])
         for j in range(doc_id_len):
             doc_id = common_doc_ids[j]
-            score = term_dict[b"doc_ids"][doc_id][b"tf_idf_score"] * term_dict[b"doc_ids"][doc_id][b"weight"]
+            score = term_dict["doc_ids"][doc_id]["tf_idf_score"] * term_dict["doc_ids"][doc_id]["weight"]
 
             if doc_id in scores:
                 scores[doc_id] += score

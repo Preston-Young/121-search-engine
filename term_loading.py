@@ -1,5 +1,6 @@
 import libpy_simdjson as simdjson # https://github.com/gerrymanoim/libpy_simdjson
 from time import time
+import json
 
 loaded_index = None
 url_id_map = None
@@ -30,31 +31,55 @@ def load_url_map():
     
     print(f'url id map load done - {round((end - start) * 1000, 2)}ms')
 
-def get_term_dict(key):
-    # if not loaded_index:
-    #     print("Index isn't loaded")
-    #     return
+# def get_term_dict(key):
+#     # if not loaded_index:
+#     #     print("Index isn't loaded")
+#     #     return
+
+    # print('top of get term dict')
+    # start = time()
+
+#     # Load respective letter index json i.e. a.json, b.json, etc.
+#     index_file = f"index/{key[0]}.json"
+#     loaded_index = simdjson.load(index_file)
+
+#     # Convert string to binary string
+#     json_term = f'/{key}'.encode()
+
+#     try:
+#         binary_dict = loaded_index.at_pointer(json_term)
+
+#     except:
+#         binary_dict = None
+
+
+#     print(f'Get term dict: {round((time() - start) * 1000, 3)} ms')
+
+#     return binary_dict
+
+def get_term_dict(term):
+    # TODO: Handle case with term not in index
 
     print('top of get term dict')
     start = time()
 
-    # Load respective letter index json i.e. a.json, b.json, etc.
-    index_file = f"index/{key[0]}.json"
-    loaded_index = simdjson.load(index_file)
+    # TODO (done): Change this later to fit letter.json
+    filename = f'{term[0]}.json'
 
-    # Convert string to binary string
-    json_term = f'/{key}'.encode()
+    # Load index_of_index/filename
+    index_of_index_dict = simdjson.load(f"index_of_index/{filename}")
 
-    try:
-        binary_dict = loaded_index.at_pointer(json_term)
-
-    except:
-        binary_dict = None
-
+    # Load index/filename and move file pointer directly to correct position
+    with open(f"index/{filename}") as index_file:
+        position = index_of_index_dict.at_pointer(f'/{term}'.encode())
+        index_file.seek(position)
+        # Wrap in curly braces and strip off newline, tailing comma
+        json_string = '{' + index_file.readline().strip(',\n') + '}'
+        term_dict = json.loads(json_string)
 
     print(f'Get term dict: {round((time() - start) * 1000, 3)} ms')
-
-    return binary_dict
+            
+    return term_dict[term]
 
 def get_url_mapping(key):
     
