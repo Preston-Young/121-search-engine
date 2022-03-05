@@ -69,17 +69,22 @@ def get_term_dict(term):
     # Load index_of_index/filename
     index_of_index_dict = simdjson.load(f"index_of_index/{filename}")
 
-    # Load index/filename and move file pointer directly to correct position
-    with open(f"index/{filename}") as index_file:
-        position = index_of_index_dict.at_pointer(f'/{term}'.encode())
-        index_file.seek(position)
-        # Wrap in curly braces and strip off newline, tailing comma
-        json_string = '{' + index_file.readline().strip(',\n') + '}'
-        term_dict = json.loads(json_string)
+    try:
+        # Load index/filename and move file pointer directly to correct position
+        with open(f"index/{filename}") as index_file:
+            position = index_of_index_dict.at_pointer(f'/{term}'.encode())
+            index_file.seek(position)
+            # Wrap in curly braces and strip off newline, tailing comma
+            json_string = '{' + index_file.readline().strip(',\n') + '}'
+            term_dict = json.loads(json_string)
+
+            return_dict = term_dict[term]
+    except:
+        return_dict = None
 
     print(f'Get term dict: {round((time() - start) * 1000, 3)} ms')
             
-    return term_dict[term]
+    return return_dict
 
 def get_url_mapping(key):
     
