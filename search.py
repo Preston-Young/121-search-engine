@@ -1,7 +1,7 @@
 import re
-#import mmap
-#from index import main, index, url_id_map, valid_token
-from index import url_id_map, valid_token
+#import numpy as np
+from operator import itemgetter
+from index import valid_token
 from time import time
 from collections import defaultdict
 from nltk.stem import PorterStemmer
@@ -9,10 +9,19 @@ from nltk.stem import PorterStemmer
 from stopwords import STOPWORDS_SET 
 from term_loading import load_index, load_url_map, get_term_dict, get_url_mapping
 
+from cython_helpers import get_top_results as c_top_results
+
 TOP_RESULT_COUNT = 5
 EXIT_COMMAND = '/end'
 
-def handle_query(query: str) -> None:
+QUERY_ERR = {
+    'urls': None,
+    'search_time': -1
+}
+
+def handle_query(query: str) -> dict:
+    print('top of handle query')
+    start = time()
     query_terms = re.sub("[^\s0-9a-zA-Z']+", "", query)
     query_terms = query_terms.split()
 
@@ -20,45 +29,39 @@ def handle_query(query: str) -> None:
     query_terms = list(filter(valid_token, query_terms))
 
     if len(query_terms) == 0:
-        return []
-
-    # print(f"Query Terms: {query_terms}")
+        return QUERY_ERR
     
-    # Assuming that stopwards are not yet filtered:
-    # with open('stopwards.py') as file:
-    #     search = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
-    #     for word in query_terms:
-    #         if re.search(br'(?i){word}', search):
-    #             query_terms.replace(word, '') 
+    print('valid query terms')
 
-    # TODO: Change this intersection logic to work for 1 and >2
+    # TODO (done): Change this intersection logic to work for 1 and >2
 
     stemmer = PorterStemmer()
     query_terms = list(map(lambda term: stemmer.stem(term), query_terms))
 
     term1 = query_terms[0]
 
-    # return dict for term1 
-    #common_doc_ids = list(sorted(index[term1]["doc_ids"].keys()))
     term1_dict = get_term_dict(term1)
-    common_doc_ids = list(sorted(term1_dict[b'doc_ids'].keys()))
+    if not term1_dict: return QUERY_ERR
+    common_doc_ids = list(sorted(term1_dict['doc_ids'].keys()))
+    #sorted = np.as_array(term1_dict['doc_ids'].keys())
+    #common_doc_ids = np.sort(sorted, kind='timsort')
+
+    print('term1 done')
 
     # print(f'split query: {query_terms}')
     # print(f'after stemming: {term1}')
     # print(f'term info: {dict(index[term1])}')
     # print(f"Common doc ids: {common_doc_ids}")
     
-    # Loop starts here for intersection
-    start = time()
-    
     for term2 in query_terms[1:]:
-        #term2_doc_ids = list(sorted(index[term2]["doc_ids"].keys()))
         term2_dict = get_term_dict(term2)
-        term2_doc_ids = list(sorted(term2_dict[b'doc_ids'].keys()))
-        
+        if not term2_dict: return QUERY_ERR
+        term2_doc_ids = list(sorted(term2_dict['doc_ids'].keys()))
+        #sorted = np.as_array(term2_dict['doc_ids'].keys())
+        #term2_doc_ids = np.sort(sorted, kind='timsort')
+
         ptr1 = ptr2 = 0
 
-        # print(f"Common doc ids: {common_doc_ids}")
         common_doc_ids_copy = common_doc_ids[:]
         common_doc_ids = []
         
@@ -77,37 +80,25 @@ def handle_query(query: str) -> None:
             else:
                 ptr2 += 1
     
-    end = time()    # end timer
-    intersection_time = round((end - start) * 1000, 2)
-    print(f'Common doc id count: {len(common_doc_ids)}')
-    print(f'Common doc id calculation runtime: {intersection_time}ms')
+    print('other terms done')
 
-    # Build doc_id:score dict
-    # {doc_id: score}
-    # {1: 10, 4: 50}
-    start = time() 
-    
-    scores = defaultdict(int)
-    for term in query_terms:
-        term_dict = get_term_dict(term)
-        for doc_id in common_doc_ids:
-            # calculate score
-            # score = index[term]["doc_ids"][doc_id].get("tf_idf_score", 0) * index[term]["doc_ids"][doc_id].get("weight", 0)
+    # ~~~~~~~~~~~~~~~~Build score dictionary for common doc doc_ids~~~~~~~~~~~~~~~~~~
+    # Format:
+    #   {doc_id: score}
+    #   {1: 10, 4: 50}
 
-            # print(term_dict[b"doc_ids"][doc_id])
-            # doc_id_dict = term_dict[b"doc_ids"][doc_id]
-            # if b'weight' in doc_id_dict and b'tf_idf_score' in doc_id_dict:
-            score = term_dict[b"doc_ids"][doc_id][b"tf_idf_score"] * term_dict[b"doc_ids"][doc_id][b"weight"]
+    print('fetching top urls')
+    top_urls = c_top_results(query_terms, common_doc_ids, 5)
+    top_urls = list(map(lambda url: get_url_mapping(url), top_urls))
 
-            scores[doc_id] += score
-    
-    end = time()    # end timer
-    scoring_time = round((end - start) * 1000, 2)
-    print(f'Scoring runtime: {scoring_time}ms')
+    search_time = round((time() - start) * 1000, 2)
 
-    return get_top_results(scores, TOP_RESULT_COUNT)
+    return {
+        'urls': top_urls,
+        'search_time': search_time,
+    }
 
-
+# TODO: Delete this function as we might not need it (converted to cython)
 '''
 Search through common doc_ids, sort by tf-idf and weight, and return top N results
 '''
@@ -127,9 +118,13 @@ def get_top_results(scores, N):
 
     return urls
 
-if __name__ == "__main__":
+'''
+Main function
+'''
+def main():
     # Load index and url map from file
-    load_index()
+    # TODO: Figure out if we still need this function since we're no longer preprocessing index
+    # load_index()
     load_url_map()
 
     # Get multiple queries in a loop
@@ -139,16 +134,13 @@ if __name__ == "__main__":
         if query == EXIT_COMMAND:
             break
 
-        start = time()  # start timer
+        res = handle_query(query)
+        top_urls, search_time = itemgetter('urls', 'search_time')(res)
 
-        top_urls = handle_query(query)
-
-        end = time()    # end timer
-        search_time = round((end - start) * 1000, 2)
         print(f'Search time: {search_time}ms')
 
         if top_urls:
-            #print urls
+            # print urls
             print("\nTop 5 URLs:")
             for i, url in enumerate(top_urls, 1):
                 print(f"{i}. {url}")
@@ -156,3 +148,6 @@ if __name__ == "__main__":
             print()
         else:
             print("No results found.")
+
+if __name__ == "__main__":
+    main()

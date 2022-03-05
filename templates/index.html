@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename= 'css/style.css') }}"
+    />
+    <title>CS121 Search Engine</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>CS121 Search Engine</h1>
+      </div>
+
+      <div>
+        <form method="POST" class="search-form">
+          <p>
+            What would you like to search for? <input type="text" name="search" />
+          </p>
+          <button type="submit" class="search-button">Search</button>
+        </form>
+      </div>
+
+      {%- if search_time -%}
+        {%- if urls -%}
+          <p>Search Time: {{ search_time }} ms</p>
+          <ol>
+            {% for url in urls %}
+
+            <li>
+              <a target="_blank" rel="noopener noreferrer" href="{{ url }}">
+                {{ url }}
+              </a>
+            </li>
+
+            {% endfor %}
+          </ol>
+        {% else %}
+        <p>No results found.</p> 
+        
+        {% endif %}
+      {% endif %}
+    </div>
+  </body>
+</html>

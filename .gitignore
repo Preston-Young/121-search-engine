@@ -1,9 +1,11 @@
 DEV
 venv
 .DS_STORE
+.DS_Store
 dump.json
 __pycache__/
 
 report.txt
 index_storage
 index
+common.py

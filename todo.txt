@@ -1,22 +1,27 @@
 Milestone 3:
 
-1. Store doc_id map in file(s)
+Nice-to-haves:
+1. Remove duplicate pages
 2. Optimize query
     2a. Lec 17 Slide 29 being more efficient with AND query
     2b. Phrase queries?
     2c. Bigrams?
     2d. Rank importance by proximity for phrase queries
-3. Get partial and merge index working
+3. Pre-process the index loading instead of front-loading it during the search
 4. Positional indexes?
 5. Index the index (seek): Lecture 8 Slide 15
+
+Done:
+1. Store doc_id map in file(s)
+3. Get partial and merge index working
 6. Save partial index
-
-
-Fixing issue with large index:
-1. Store url_to_id map in a JSON file - DONE
-2. Index:
-    a. Load index file as JSON binary at the top of search.py
+7. Read in from partial indicies as opposed to the large file, i.e. ("apple" is from a.txt)
+8. Uncomment the partial index logic to ensure that merging and retrieving works properly
     b. Make a new file for helper functions
         a. Check if key exists in JSON binary
         b. Fetch key and return decoded python dict
-    c. Edit search.py to work with new index helper
+Fixing issue with large index:
+    1. Store url_to_id map in a JSON file - DONE
+    2. Index:
+        a. Load index file as JSON binary at the top of search.py
+        c. Edit search.py to work with new index helper
