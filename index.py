@@ -1,3 +1,4 @@
+# INDEX STRUCTURE
 # {
 #   "token": {
 #       "token_frequency": frequency (int),
@@ -106,7 +107,7 @@ def parse_json(root_dir):
     write_partial_index()
 
     #write url_id_map to json file
-    with open("index_storage/url_id_map.json", "w") as output_file:
+    with open("index_storage/url_id_map.json", "w+") as output_file:
         json.dump(url_id_map, output_file, indent = 2)
 
 '''
@@ -207,8 +208,6 @@ def merge_partial_index(partial_idx):
         if index_file_name != char_file_name:
 
             # Dump json from memory into old index_file and close it
-            # with open(index_file, "w") as f:
-            #     json.dump(loaded_json, f, indent = 2)
             save_sub_index(loaded_json, index_file_name)
 
             index_file_name = char_file_name
@@ -229,9 +228,6 @@ def merge_partial_index(partial_idx):
         loaded_json[term]["doc_ids"].update(partial_doc_id_dict)
 
     # Dump the remaining json from memory into index_file and close it
-    # with open(index_file, "w") as f:
-    #     json.dump(loaded_json, f, indent = 2)
-    #     # json.dumps(loaded_json, f, indent = 2)
     save_sub_index(loaded_json, index_file_name)
 
 # dict_1 = { 3: {...}, 4: {...} }
@@ -273,7 +269,7 @@ def save_sub_index(term_dict, filename):
         output_file.write('}')
 
     # Dumping index_of_index_dict into file
-    with open(f"index_of_index/{filename}", "w") as index_of_index_file:
+    with open(f"index_of_index/{filename}", "w+") as index_of_index_file:
         json.dump(index_of_index_dict, index_of_index_file)
 
 '''
@@ -283,53 +279,37 @@ def valid_token(token):
     return token != '' and len(token) == len(token.encode()) and token not in STOPWORDS_SET and len(token) > 2
 
 '''
-Create report from data
-'''
-def create_report():
-    with open("report.txt", "w") as output:
-        output.write(f"Number of documents: {doc_count}\n")
-
-        output.write(f"Number of unique tokens: {len(unique_tokens)}\n")
-
-        size_in_kb = sys.getsizeof(index) / 1000
-        output.write(f"Size of index on disk: {size_in_kb}KB\n")
-
-'''
 Main function
 '''
 def main():
     start = time()  # start timer
 
     # Initialize index and index of index character json files to empty
-    # for ascii in range(97, 123):
-    #     with open(f"index/{chr(ascii)}.json", "w+") as output:
-    #         json.dump(dict(), output)
-    #     with open(f"index_of_index/{chr(ascii)}.json", "w+") as output:
-    #         json.dump(dict(), output)
+    for ascii in range(97, 123):
+        with open(f"index/{chr(ascii)}.json", "w+") as output:
+            json.dump(dict(), output)
+        with open(f"index_of_index/{chr(ascii)}.json", "w+") as output:
+            json.dump(dict(), output)
 
     # ONLY UNCOMMENT IF YOU WANT TO REBUILD PARTIAL INDEXES FROM SCRATCH
     # Parsing json and writing all partial indexes
-    # parse_json(DATA_FOLDER)
+    parse_json(DATA_FOLDER)
 
     # Merge all partial indexes and build index of indexes
-    # print("Starting merge....")
-    # for partial_idx in os.listdir("index_storage"):
-    #     if partial_idx != "url_id_map.json":
-    #         merge_partial_index(partial_idx)
-    # print("Merging finished!")
+    print("Starting merge....")
+    for partial_idx in os.listdir("index_storage"):
+        if partial_idx != "url_id_map.json":
+            merge_partial_index(partial_idx)
+    print("Merging finished!")
 
     # Calculate tf-idf for all documents for each token
     for idx in os.listdir("index"):
-        if idx.endswith('.json'):
+        if idx.endswith('.json'): # Ignore hidden files such as .DS_STORE
             calculate_tf_idf(idx)
 
     end = time()    # end timer
     index_time = round(end-start, 2)
     print(f'Indexing time: {index_time}s')
-
-    # create_report()
-    # with open(INDEX_DUMP_PATH, 'w') as f:
-    #     f.write(json.dumps(index, indent=4, sort_keys=True))
 
 if __name__ == '__main__':
     main()

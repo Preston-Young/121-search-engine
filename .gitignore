@@ -8,4 +8,8 @@ __pycache__/
 report.txt
 index_storage
 index
+index_of_index
 common.py
+cython_helpers.c
+cython_helpers.cpython-39-darwin.so
+build
