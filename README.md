@@ -3,13 +3,13 @@
 
 ## How to run:
 
- - **Prerequisites**
+1. **Prerequisites**
     -   macOS 10.15+ / Linux
     -   gcc>=9, clang >= 10 (C++17 code)
     -   Properly set CC and CXX environment variables
     -   Python 3.9
     
- - **Setup**
+2. **Setup**
      - Virtual Environment and External Packages
         -   Create venv
     	   	 - `python3 -m venv /path/to/new/virtual/environment`
@@ -27,7 +27,7 @@
     	   	 -   index_of_index
     	   	 -   index_storage
 
- 3. **Running Index (This should take around 98 minutes)**
+3. **Running Index (This should take around 98 minutes)**
 	 - Run index file
 		 - `python index.py`
 
