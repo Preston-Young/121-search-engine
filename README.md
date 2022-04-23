@@ -3,7 +3,7 @@
 ![web-gui](https://user-images.githubusercontent.com/56369636/164840888-06f9b8df-eae9-4376-b77d-8e7cc5868eb8.png)
 
 
-## 🔗 Description
+## 🔗 What it Does
 Using a corpus of over 55,000 web pages, we built a fully-functioning search engine that returns results in less than 300ms. There are two main steps to our search engine: indexing and searching. Indexing is run as a preprocessing step which basically creates a lookup table that stores all of the unique tokens (words) found in the corpus, along with which page they were found on and a weight associated with how important/relevant each word was to the page. The main event is, of course, the searching, which is exactly what it sounds like! Just simply type your query in the search bar, and it will scour our index on all 55,000 pages to deliver you the best results. There are two ways to view the searching: in the terminal or on the web GUI. Both are functionally the same! Feel free to check out [our presentation](https://docs.google.com/presentation/d/1jLecR7rZEYygrGMsuFzDREkn6NhVuYlr4yLZYbKTqCA/edit?usp=sharing) on it as well to learn more details about the indexing and searching!
 
 ## ⚙️ Tech Stack
