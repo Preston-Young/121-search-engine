@@ -1,7 +1,17 @@
 
+
 # Search Engine
 
-## How to run:
+## Description
+Using a corpus of over 55,000 web pages, we built a fully-functioning search engine that returns results in less than 300ms. There are two main steps to our search engine: indexing and searching. Indexing is run as a preprocessing step which basically creates a lookup table that stores all of the unique tokens (words) found in the corpus, along with which page they were found on and a weight associated with how important/relevant each word was to the page. The main event is, of course, the searching, which is exactly what it sounds like! Just simply type your query in the search bar, and it will scour our index on all 55,000 pages to deliver you the best results. There are two ways to view the searching: in the terminal or on the web GUI. Both are functionally the same! Feel free to check out [our presentation](https://docs.google.com/presentation/d/1jLecR7rZEYygrGMsuFzDREkn6NhVuYlr4yLZYbKTqCA/edit?usp=sharing) on it as well to learn more details about the indexing and searching!
+
+## Tech Stack
+We used **Python** for all of the logic for both indexing and searching. For the web GUI, we used a **Flask** **HTML** template styled with some custom **CSS**.
+
+## Challenges
+This was our first time building a search engine and our greatest challenges were reducing our query time and balancing memory usage. When building the index, it's not scalable to store the entire index in memory, so we had to carefully balance our writes to disk. But writing the partial indices to disk posed another problem: merging. We had to find a way to efficiently merge them without running in the same problem of excessive memory usage. We lastly had to employ several techniques, such as indexing our index and converting bottleneck Python functions to Cython, as our initial search times were several orders of magnitude more than our final 300ms threshold.
+
+## How to Run
 
 1. **Prerequisites**
     -   macOS 10.15+ / Linux
